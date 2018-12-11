@@ -1,4 +1,5 @@
 function resolvePromise(promise2,x,resolve,reject){
+  // console.log(promise2===x)
   //判断x和promise2之间的关系
   //因为promise2是上一个promise.then后的返回结果，所以如果相同，会导致下面的.then会是同一个promise2，一直都是，没有尽头
   if(x === promise2){//相当于promise.then之后return了自己，因为then会等待return后的promise，导致自己等待自己，一直处于等待
@@ -40,7 +41,8 @@ function resolvePromise(promise2,x,resolve,reject){
 }
 
 class Promise{
-  constructor(executor){
+  constructor(executor,name){
+    this.name = name
     //控制状态，使用了一次之后，接下来的都不被使用
     this.status = 'pendding'
     this.value = undefined
@@ -53,7 +55,7 @@ class Promise{
     //定义resolve函数
     let resolve = (data)=>{
       if(this.status==='pendding'){
-        this.status = 'resolve'
+        // this.status = 'resolve'
         rv(data)
       } 
     }
@@ -61,9 +63,11 @@ class Promise{
       this.value = data
       //假如第一次实力的promise的
       if(data instanceof Promise){
+        this.status = 'pendding'
         data.then(rv,rj)
       }else{
-        //监听回调函数
+        this.status = 'resolve'
+        //监听回调函数(如果data是promise，则上一个的会等待这个data执行了这个rv方法之后在执行，它本身的成功回调)
         this.onResolvedCallbacks.forEach(fn=>fn())
       }
       
@@ -81,6 +85,7 @@ class Promise{
         this.status==='pendding'
         data.then(rv,rj)
       }else{
+        this.status = 'reject'
         this.onRejectedCallbacks.forEach(fn=>fn())        
       }  
     }
@@ -93,9 +98,6 @@ class Promise{
     }
   }
   then(onFufilled,onRejected){
-    if(this.value instanceof Promise){
-      this.status = 'pendding'
-    }
     // console.log(onFufilled.a)    
     //解决onFufilled,onRejected没有传值的问题
     onFufilled = typeof onFufilled === 'function'?onFufilled:y=>y
